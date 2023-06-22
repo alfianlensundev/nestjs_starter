@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model auth_group_modul {
+  id_auth_group_modul Int          @id @default(autoincrement()) @db.UnsignedInt
+  id_auth_groups      Int?         @db.UnsignedMediumInt
+  id_auth_modul       Int?         @db.UnsignedInt
+  flag_active         Int?         @default(1) @db.UnsignedInt
+  auth_groups         auth_groups? @relation(fields: [id_auth_groups], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "FK_auth_group_modul_auth_groups")
+  auth_modul          auth_modul?  @relation(fields: [id_auth_modul], references: [id_auth_modul], onDelete: Restrict, onUpdate: Restrict, map: "FK_auth_group_modul_auth_modul")
+
+  @@index([id_auth_groups], map: "FK_auth_group_modul_auth_groups")
+  @@index([id_auth_modul], map: "FK_auth_group_modul_auth_modul")
+}
+
+model auth_groups {
+  id                   Int                 @id @default(autoincrement()) @db.UnsignedMediumInt
+  id_unit_kerja        Int?
+  name                 String              @db.VarChar(50)
+  description          String              @db.VarChar(100)
+  flag_active          Int                 @default(1)
+  id_mst_instalasi     Int?                @default(0)
+  id_mst_sub_instalasi Int?                @default(0)
+  id_mst_unit_ruangan  Int?                @default(0)
+  link_home            String?             @default("pasien/global-cari-welcome") @db.VarChar(50)
+  auth_group_modul     auth_group_modul[]
+  auth_users_groups    auth_users_groups[]
+}
+
+model auth_login_attempts {
+  id         Int    @id @default(autoincrement()) @db.UnsignedInt
+  ip_address String @db.VarChar(45)
+  login      String @db.VarChar(100)
+  time       Int?   @db.UnsignedInt
+}
+
+model auth_modul {
+  id_auth_modul    Int                @id @default(autoincrement()) @db.UnsignedInt
+  nm_modul         String?            @unique(map: "Index 2") @db.VarChar(255)
+  flag_active      Boolean?           @default(true)
+  date_created     DateTime?          @default(now()) @db.Timestamp(0)
+  deskripsi        String?            @db.Text
+  auth_group_modul auth_group_modul[]
+}
+
+model auth_users {
+  id                          Int                 @id @default(autoincrement()) @db.UnsignedInt
+  username                    String?             @db.VarChar(100)
+  password                    String              @db.Text
+  home_url                    String?             @db.VarChar(255)
+  email                       String              @db.VarChar(254)
+  activation_selector         String?             @db.VarChar(255)
+  ip_address                  String?             @db.VarChar(45)
+  activation_code             String?             @db.VarChar(255)
+  status_transaksi_kasir      Boolean?            @default(false)
+  status_terima_uang          Boolean?            @default(false)
+  forgotten_password_selector String?             @unique(map: "uc_forgotten_password_selector") @db.VarChar(255)
+  forgotten_password_code     String?             @db.VarChar(255)
+  forgotten_password_time     Int?                @db.UnsignedInt
+  remember_selector           String?             @unique(map: "uc_remember_selector") @db.VarChar(255)
+  remember_code               String?             @db.VarChar(255)
+  created_on                  Int                 @default(0) @db.UnsignedInt
+  last_login                  Int?                @db.UnsignedInt
+  active                      Boolean?
+  first_name                  String?             @db.VarChar(255)
+  last_name                   String?             @db.VarChar(50)
+  company                     String?             @db.VarChar(100)
+  phone                       String?             @db.VarChar(20)
+  date_created                DateTime?           @default(now()) @db.Timestamp(0)
+  flag_active                 Int?                @default(1)
+  id_unit_kerja               Int?                @db.UnsignedInt
+  id_mst_instalasi            Int?                @default(0)
+  id_mst_unit_ruangan         Int?                @default(0)
+  flag_dev                    Int?                @default(0)
+  flag_terima_uang            Boolean?            @default(false)
+  id_telegram                 String?             @default("0") @db.VarChar(255)
+  last_update_password        DateTime?           @default(now()) @db.DateTime(0)
+  auth_users_groups           auth_users_groups[]
+
+  @@index([email], map: "uc_email")
+}
+
+model auth_users_bind {
+  id_auth_users_bind       BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  id_auth_users            BigInt?
+  id_mst_login_type        Int       @default(0)
+  uid                      String    @db.Text
+  user                     String?   @db.VarChar(255)
+  profile_metadata         String    @db.LongText
+  additional_data_metadata String    @db.LongText
+  deleted_at               DateTime? @db.Timestamp(0)
+  created_at               DateTime  @default(now()) @db.Timestamp(0)
+  created_by               String?   @db.VarChar(255)
+  updated_at               DateTime? @db.Timestamp(0)
+  updated_by               String?   @db.VarChar(255)
+}
+
+model auth_users_groups {
+  id           Int         @id @default(autoincrement()) @db.UnsignedInt
+  user_id      Int         @db.UnsignedInt
+  group_id     Int         @db.UnsignedMediumInt
+  date_created DateTime?   @default(now()) @db.Timestamp(0)
+  flag_active  Int?        @default(1)
+  auth_groups  auth_groups @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_users_groups_groups1")
+  auth_users   auth_users  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_users_groups_users1")
+
+  @@index([group_id], map: "fk_users_groups_groups1_idx")
+  @@index([user_id], map: "fk_users_groups_users1_idx")
+}
+
+model auth_users_history_login {
+  id_auth_users_history_login BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  id_auth_users               BigInt?
+  id_mst_app                  Int?
+  user_agent                  String?  @db.Text
+  ip_address                  String?  @db.VarChar(15)
+  created_at                  DateTime @default(now()) @db.Timestamp(0)
+}
